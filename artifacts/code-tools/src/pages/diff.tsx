@@ -10,14 +10,17 @@ import "prismjs/components/prism-python";
 import "prismjs/components/prism-java";
 import "prismjs/components/prism-c";
 import "prismjs/components/prism-cpp";
-import { Copy, Trash2, ArrowLeftRight } from "lucide-react";
+import { Copy, Trash2, ArrowLeftRight, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 const LANGUAGES = [
-  "JavaScript", "TypeScript", "HTML", "CSS", "JSON", "Python", "Java", "C++", "Plain Text",
+  "JavaScript", "TypeScript", "HTML", "CSS", "JSON",
+  "Python", "Java", "C++", "Plain Text",
 ];
 
 const LANG_PRISM_MAP: Record<string, string> = {
@@ -32,12 +35,39 @@ const LANG_PRISM_MAP: Record<string, string> = {
   "Plain Text": "",
 };
 
+const EXT_MAP: Record<string, string> = {
+  JavaScript: "js", TypeScript: "ts", HTML: "html", CSS: "css",
+  JSON: "json", Python: "py", Java: "java", "C++": "cpp", "Plain Text": "txt",
+};
+
 function highlightLine(line: string, language: string): string {
   const lang = LANG_PRISM_MAP[language] || "";
   if (lang && Prism.languages[lang]) {
     return Prism.highlight(line, Prism.languages[lang], lang);
   }
   return line.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function downloadText(content: string, filename: string) {
+  const blob = new Blob([content], { type: "text/plain" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function buildUnifiedDiff(original: string, modified: string): string {
+  const result = diffLines(original, modified);
+  const lines: string[] = ["--- original", "+++ modified"];
+  result.forEach((part) => {
+    const prefix = part.added ? "+" : part.removed ? "-" : " ";
+    part.value.replace(/\n$/, "").split("\n").forEach((l) => lines.push(prefix + l));
+  });
+  return lines.join("\n");
 }
 
 export default function DiffPage() {
@@ -62,9 +92,28 @@ export default function DiffPage() {
 
   const handleSwap = () => { setOriginal(modified); setModified(original); };
   const handleClear = () => { setOriginal(""); setModified(""); };
-  const handleCopy = () => {
+
+  const handleCopyOriginal = () => {
+    navigator.clipboard.writeText(original);
+    toast({ title: "Copied", description: "Original code copied." });
+  };
+  const handleCopyModified = () => {
     navigator.clipboard.writeText(modified);
-    toast({ title: "Copied to clipboard", description: "Modified code has been copied." });
+    toast({ title: "Copied", description: "Modified code copied." });
+  };
+  const handleCopyDiff = () => {
+    navigator.clipboard.writeText(buildUnifiedDiff(original, modified));
+    toast({ title: "Copied", description: "Unified diff copied." });
+  };
+  const handleDownloadDiff = () => {
+    const ext = EXT_MAP[language] || "txt";
+    downloadText(buildUnifiedDiff(original, modified), `diff.${ext}.diff`);
+    toast({ title: "Downloaded", description: `Saved as diff.${ext}.diff` });
+  };
+  const handleDownloadModified = () => {
+    const ext = EXT_MAP[language] || "txt";
+    downloadText(modified, `modified.${ext}`);
+    toast({ title: "Downloaded", description: `Saved as modified.${ext}` });
   };
 
   const hasDiff = original.length > 0 || modified.length > 0;
@@ -79,46 +128,47 @@ export default function DiffPage() {
       rawLines.forEach((line, lineIndex) => {
         const leftNum = part.added ? null : leftLineNum++;
         const rightNum = part.removed ? null : rightLineNum++;
-
         const isRemoved = !!part.removed;
         const isAdded = !!part.added;
 
         rows.push(
           <div key={`${index}-${lineIndex}`} className="flex font-mono text-xs leading-5 min-w-0">
-            {/* Left */}
             <div className={cn(
               "flex w-1/2 border-r border-border min-w-0",
-              isRemoved ? "bg-red-950/40" : "bg-transparent"
+              isRemoved ? "bg-red-500/10 dark:bg-red-950/40" : ""
             )}>
               <div className={cn(
-                "w-10 shrink-0 text-right pr-2 select-none border-r text-muted-foreground/60 py-0.5",
-                isRemoved ? "border-red-800/40 bg-red-950/60 text-red-400/70" : "border-border bg-card/30"
+                "w-10 shrink-0 text-right pr-2 select-none border-r py-0.5 text-xs",
+                isRemoved
+                  ? "border-red-400/30 bg-red-500/15 text-red-600 dark:text-red-400/70"
+                  : "border-border bg-card/30 text-muted-foreground/60"
               )}>
                 {leftNum ?? ""}
               </div>
               <div className="pl-3 pr-2 py-0.5 whitespace-pre overflow-hidden flex-1 min-w-0">
-                {isRemoved && <span className="text-red-400 mr-1 select-none">-</span>}
+                {isRemoved && <span className="text-red-500 dark:text-red-400 mr-1 select-none">-</span>}
                 <span
-                  className={isRemoved ? "text-red-300" : "text-foreground/80"}
+                  className={isRemoved ? "text-red-700 dark:text-red-300" : "text-foreground/80"}
                   dangerouslySetInnerHTML={{ __html: highlightLine(line, language) || "&nbsp;" }}
                 />
               </div>
             </div>
-            {/* Right */}
             <div className={cn(
               "flex w-1/2 min-w-0",
-              isAdded ? "bg-green-950/40" : "bg-transparent"
+              isAdded ? "bg-green-500/10 dark:bg-green-950/40" : ""
             )}>
               <div className={cn(
-                "w-10 shrink-0 text-right pr-2 select-none border-r text-muted-foreground/60 py-0.5",
-                isAdded ? "border-green-800/40 bg-green-950/60 text-green-400/70" : "border-border bg-card/30"
+                "w-10 shrink-0 text-right pr-2 select-none border-r py-0.5 text-xs",
+                isAdded
+                  ? "border-green-400/30 bg-green-500/15 text-green-600 dark:text-green-400/70"
+                  : "border-border bg-card/30 text-muted-foreground/60"
               )}>
                 {rightNum ?? ""}
               </div>
               <div className="pl-3 pr-2 py-0.5 whitespace-pre overflow-hidden flex-1 min-w-0">
-                {isAdded && <span className="text-green-400 mr-1 select-none">+</span>}
+                {isAdded && <span className="text-green-500 dark:text-green-400 mr-1 select-none">+</span>}
                 <span
-                  className={isAdded ? "text-green-300" : "text-foreground/80"}
+                  className={isAdded ? "text-green-700 dark:text-green-300" : "text-foreground/80"}
                   dangerouslySetInnerHTML={{ __html: highlightLine(line, language) || "&nbsp;" }}
                 />
               </div>
@@ -127,7 +177,6 @@ export default function DiffPage() {
         );
       });
     });
-
     return rows;
   };
 
@@ -141,43 +190,49 @@ export default function DiffPage() {
       rawLines.forEach((line, lineIndex) => {
         const isRemoved = !!part.removed;
         const isAdded = !!part.added;
-
         const lNum = isAdded ? "" : leftLine;
         const rNum = isRemoved ? "" : rightLine;
-
         if (!isAdded) leftLine++;
         if (!isRemoved) rightLine++;
 
         rows.push(
           <div key={`${index}-${lineIndex}`} className={cn(
             "flex font-mono text-xs leading-5 min-w-0",
-            isRemoved ? "bg-red-950/40" : isAdded ? "bg-green-950/40" : "bg-transparent"
+            isRemoved ? "bg-red-500/10 dark:bg-red-950/40"
+              : isAdded ? "bg-green-500/10 dark:bg-green-950/40"
+              : ""
           )}>
             <div className={cn(
-              "w-10 shrink-0 text-right pr-2 select-none border-r py-0.5 text-muted-foreground/60",
-              isRemoved ? "border-red-800/40 bg-red-950/60 text-red-400/70"
-                : isAdded ? "border-green-800/40 bg-green-950/60 text-green-400/70"
-                : "border-border bg-card/30"
+              "w-10 shrink-0 text-right pr-2 select-none border-r py-0.5 text-xs",
+              isRemoved ? "border-red-400/30 bg-red-500/15 text-red-600 dark:text-red-400/70"
+                : isAdded ? "border-green-400/30 bg-green-500/15 text-green-600 dark:text-green-400/70"
+                : "border-border bg-card/30 text-muted-foreground/60"
             )}>
               {lNum}
             </div>
             <div className={cn(
-              "w-10 shrink-0 text-right pr-2 select-none border-r py-0.5 text-muted-foreground/60",
-              isRemoved ? "border-red-800/40 bg-red-950/60 text-red-400/70"
-                : isAdded ? "border-green-800/40 bg-green-950/60 text-green-400/70"
-                : "border-border bg-card/30"
+              "w-10 shrink-0 text-right pr-2 select-none border-r py-0.5 text-xs",
+              isRemoved ? "border-red-400/30 bg-red-500/15 text-red-600 dark:text-red-400/70"
+                : isAdded ? "border-green-400/30 bg-green-500/15 text-green-600 dark:text-green-400/70"
+                : "border-border bg-card/30 text-muted-foreground/60"
             )}>
               {rNum}
             </div>
             <div className="pl-3 pr-2 py-0.5 whitespace-pre overflow-hidden flex-1 min-w-0">
               <span className={cn(
                 "mr-1 select-none font-bold",
-                isRemoved ? "text-red-400" : isAdded ? "text-green-400" : "text-transparent"
+                isRemoved ? "text-red-500 dark:text-red-400"
+                  : isAdded ? "text-green-500 dark:text-green-400"
+                  : "text-transparent"
               )}>
                 {isRemoved ? "-" : isAdded ? "+" : " "}
               </span>
               <span
-                className={isRemoved ? "text-red-300" : isAdded ? "text-green-300" : "text-foreground/80"}
+                className={
+                  isRemoved ? "text-red-700 dark:text-red-300"
+                    : isAdded ? "text-green-700 dark:text-green-300"
+                    : "text-foreground/80"
+                }
                 dangerouslySetInnerHTML={{ __html: highlightLine(line, language) || "&nbsp;" }}
               />
             </div>
@@ -185,7 +240,6 @@ export default function DiffPage() {
         );
       });
     });
-
     return rows;
   };
 
@@ -233,11 +287,11 @@ export default function DiffPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           {hasDiff && (
             <div className="flex items-center gap-2.5 text-xs font-mono bg-background px-3 py-1 rounded-md border border-border">
-              <span className="text-green-400">+{stats.added}</span>
-              <span className="text-red-400">-{stats.removed}</span>
+              <span className="text-green-600 dark:text-green-400">+{stats.added}</span>
+              <span className="text-red-600 dark:text-red-400">-{stats.removed}</span>
               <span className="text-muted-foreground">~{stats.unchanged}</span>
             </div>
           )}
@@ -247,8 +301,11 @@ export default function DiffPage() {
           <Button data-testid="button-swap" variant="outline" size="sm" onClick={handleSwap}>
             <ArrowLeftRight className="w-4 h-4 mr-2" /> Swap
           </Button>
-          <Button data-testid="button-copy" variant="default" size="sm" onClick={handleCopy}>
+          <Button data-testid="button-copy-modified" variant="outline" size="sm" onClick={handleCopyModified} disabled={!modified}>
             <Copy className="w-4 h-4 mr-2" /> Copy
+          </Button>
+          <Button data-testid="button-download" variant="outline" size="sm" onClick={handleDownloadDiff} disabled={!hasDiff}>
+            <Download className="w-4 h-4 mr-2" /> Download
           </Button>
         </div>
       </div>
@@ -259,7 +316,18 @@ export default function DiffPage() {
         <div className="flex-1 flex flex-col border-r border-border min-w-0">
           <div className="flex items-center justify-between px-3 py-1.5 border-b border-border bg-card shrink-0">
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Original</span>
-            <span className="text-xs text-muted-foreground font-mono">{original ? original.split("\n").length : 0} lines</span>
+            <div className="flex items-center gap-1">
+              <span className="text-xs text-muted-foreground font-mono mr-1">
+                {original ? original.split("\n").length : 0} lines
+              </span>
+              <Button
+                variant="ghost" size="icon"
+                className="h-5 w-5 text-muted-foreground hover:text-foreground"
+                onClick={handleCopyOriginal} disabled={!original} title="Copy original"
+              >
+                <Copy className="w-3 h-3" />
+              </Button>
+            </div>
           </div>
           <textarea
             data-testid="input-original"
@@ -275,7 +343,25 @@ export default function DiffPage() {
         <div className="flex-1 flex flex-col min-w-0">
           <div className="flex items-center justify-between px-3 py-1.5 border-b border-border bg-card shrink-0">
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Modified</span>
-            <span className="text-xs text-muted-foreground font-mono">{modified ? modified.split("\n").length : 0} lines</span>
+            <div className="flex items-center gap-1">
+              <span className="text-xs text-muted-foreground font-mono mr-1">
+                {modified ? modified.split("\n").length : 0} lines
+              </span>
+              <Button
+                variant="ghost" size="icon"
+                className="h-5 w-5 text-muted-foreground hover:text-foreground"
+                onClick={handleCopyModified} disabled={!modified} title="Copy modified"
+              >
+                <Copy className="w-3 h-3" />
+              </Button>
+              <Button
+                variant="ghost" size="icon"
+                className="h-5 w-5 text-muted-foreground hover:text-foreground"
+                onClick={handleDownloadModified} disabled={!modified} title="Download modified"
+              >
+                <Download className="w-3 h-3" />
+              </Button>
+            </div>
           </div>
           <textarea
             data-testid="input-modified"
@@ -289,12 +375,25 @@ export default function DiffPage() {
       </div>
 
       {/* Diff Output */}
-      <div className="flex-1 min-h-0 flex flex-col bg-[hsl(220_17%_5%)]">
+      <div className="flex-1 min-h-0 flex flex-col" style={{ background: "var(--code-bg)" }}>
         <div className="px-4 py-1.5 border-b border-border bg-card shrink-0 flex items-center justify-between">
           <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Diff Output</span>
-          {hasDiff && (
-            <span className="text-xs text-muted-foreground">{viewMode === "split" ? "Side by Side" : "Inline"}</span>
-          )}
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost" size="icon"
+              className="h-6 w-6 text-muted-foreground hover:text-foreground"
+              onClick={handleCopyDiff} disabled={!hasDiff} title="Copy unified diff"
+            >
+              <Copy className="w-3.5 h-3.5" />
+            </Button>
+            <Button
+              variant="ghost" size="icon"
+              className="h-6 w-6 text-muted-foreground hover:text-foreground"
+              onClick={handleDownloadDiff} disabled={!hasDiff} title="Download diff file"
+            >
+              <Download className="w-3.5 h-3.5" />
+            </Button>
+          </div>
         </div>
         <div className="flex-1 min-h-0 overflow-auto">
           {hasDiff ? (
