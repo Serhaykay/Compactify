@@ -98,3 +98,89 @@
     @apply font-sans antialiased bg-background text-foreground;
   }
 }
+
+/* Prism.js syntax highlighting tokens */
+code[class*="language-"],
+pre[class*="language-"] {
+  color: hsl(214 32% 88%);
+  background: none;
+  font-family: var(--app-font-mono);
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  tab-size: 2;
+  hyphens: none;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: hsl(215 14% 45%);
+  font-style: italic;
+}
+
+.token.punctuation {
+  color: hsl(214 20% 65%);
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: hsl(350 70% 68%);
+}
+
+.token.boolean,
+.token.number {
+  color: hsl(28 80% 65%);
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: hsl(135 55% 63%);
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: hsl(190 60% 65%);
+}
+
+.token.atrule,
+.token.attr-value,
+.token.keyword {
+  color: hsl(217 85% 68%);
+}
+
+.token.function,
+.token.class-name {
+  color: hsl(270 65% 72%);
+}
+
+.token.regex,
+.token.important {
+  color: hsl(38 85% 62%);
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
