@@ -153,9 +153,9 @@ pre[class*="language-"] {
   background: none;
   font-family: var(--app-font-mono);
   text-align: left;
-  white-space: pre;
-  word-spacing: normal;
-  word-break: normal;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: break-word;
   tab-size: 2;
   hyphens: none;
 }
