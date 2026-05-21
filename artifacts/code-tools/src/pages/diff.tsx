@@ -196,10 +196,18 @@ export default function DiffPage() {
             key={key}
             className={cn(
               "flex font-mono text-xs leading-5 min-w-0",
-              (isRemoved || isAdded) && "cursor-help"
+              (isRemoved || isAdded) && "cursor-help focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             )}
+            tabIndex={isRemoved || isAdded ? 0 : undefined}
+            role={isRemoved || isAdded ? "button" : undefined}
+            aria-label={isRemoved || isAdded ? (tooltipMap.get(key) ?? (isRemoved ? "Removed line" : "Added line")) : undefined}
             onMouseMove={isRemoved || isAdded ? (e) => showTooltip(e, key) : undefined}
             onMouseLeave={isRemoved || isAdded ? hideTooltip : undefined}
+            onFocus={isRemoved || isAdded ? (e) => {
+              const r = e.currentTarget.getBoundingClientRect();
+              setTooltip({ x: r.left, y: r.top - 4, text: tooltipMap.get(key) ?? (isRemoved ? "Line removed" : "Line added") });
+            } : undefined}
+            onBlur={isRemoved || isAdded ? hideTooltip : undefined}
           >
             {/* Left */}
             <div className={cn("flex w-1/2 border-r border-border min-w-0", isRemoved && "bg-red-500/10 dark:bg-red-950/40")}>
@@ -267,10 +275,18 @@ export default function DiffPage() {
               "flex font-mono text-xs leading-5 min-w-0",
               isRemoved ? "bg-red-500/10 dark:bg-red-950/40"
                 : isAdded ? "bg-green-500/10 dark:bg-green-950/40" : "",
-              (isRemoved || isAdded) && "cursor-help"
+              (isRemoved || isAdded) && "cursor-help focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             )}
+            tabIndex={isRemoved || isAdded ? 0 : undefined}
+            role={isRemoved || isAdded ? "button" : undefined}
+            aria-label={isRemoved || isAdded ? (tooltipMap.get(key) ?? (isRemoved ? "Removed line" : "Added line")) : undefined}
             onMouseMove={isRemoved || isAdded ? (e) => showTooltip(e, key) : undefined}
             onMouseLeave={isRemoved || isAdded ? hideTooltip : undefined}
+            onFocus={isRemoved || isAdded ? (e) => {
+              const r = e.currentTarget.getBoundingClientRect();
+              setTooltip({ x: r.left, y: r.top - 4, text: tooltipMap.get(key) ?? (isRemoved ? "Line removed" : "Line added") });
+            } : undefined}
+            onBlur={isRemoved || isAdded ? hideTooltip : undefined}
           >
             <div className={cn(
               "w-10 shrink-0 text-right pr-2 select-none border-r py-0.5 text-xs",
@@ -323,6 +339,7 @@ export default function DiffPage() {
           <div className="flex items-center rounded-md border border-input overflow-hidden h-8">
             <button
               onClick={() => setViewMode("split")}
+              aria-pressed={viewMode === "split"}
               className={cn(
                 "px-3 h-full text-xs font-medium transition-colors",
                 viewMode === "split" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
@@ -331,6 +348,7 @@ export default function DiffPage() {
             >Side by Side</button>
             <button
               onClick={() => setViewMode("inline")}
+              aria-pressed={viewMode === "inline"}
               className={cn(
                 "px-3 h-full text-xs font-medium transition-colors border-l border-input",
                 viewMode === "inline" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"

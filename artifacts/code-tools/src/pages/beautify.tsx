@@ -158,16 +158,16 @@ function computeMinify(input: string, language: string): { result: string; error
         .replace(/>\s+</g, "><")
         .trim();
     } else {
-      // JS / TS — safe approach: strip comments, trim lines, collapse
+      // JS / TS — safe: only remove block comments and full-line // comments.
+      // Never apply global // regex — it would destroy URLs like "http://..."
+      // inside strings. Inline trailing comments are preserved (acceptable tradeoff).
       result = input
-        .replace(/\/\*[\s\S]*?\*\//g, "")
-        .replace(/\/\/[^\n]*/g, "")
+        .replace(/\/\*[\s\S]*?\*\//g, " ")   // block comments → space
         .split("\n")
         .map((l) => l.trim())
-        .filter(Boolean)
+        .filter((l) => l !== "" && !l.startsWith("//"))  // drop full-line comments
         .join(" ")
         .replace(/\s*([{};,()\[\]])\s*/g, "$1")
-        .replace(/\s*([=!<>+\-*/%&|?:]+)\s*/g, " $1 ")
         .replace(/\s{2,}/g, " ")
         .trim();
     }
@@ -185,6 +185,7 @@ export default function BeautifyPage() {
   const [language, setLanguage] = React.useState("JavaScript");
   const [optionsOpen, setOptionsOpen] = React.useState(true);
   const [lastOp, setLastOp] = React.useState<"beautify" | "minify">("beautify");
+  const [parseError, setParseError] = React.useState<string | null>(null);
 
   const [indentSize, setIndentSize] = React.useState("4");
   const [useTabs, setUseTabs] = React.useState(false);
@@ -202,6 +203,7 @@ export default function BeautifyPage() {
   React.useEffect(() => {
     if (!input.trim()) {
       setOutput("");
+      setParseError(null);
       setViewMode("input");
       return;
     }
@@ -209,11 +211,13 @@ export default function BeautifyPage() {
       const { indentSize, useTabs, wrapLength, braceStyle, flags, language } = optsRef.current;
       if (lastOp === "minify") {
         const { result, error } = computeMinify(input, language);
-        if (error) return;
+        if (error) { setParseError(error); return; }
+        setParseError(null);
         setOutput(result);
       } else {
         const { result, error } = computeBeautify(input, language, indentSize, useTabs, wrapLength, braceStyle, flags);
-        if (error) return;
+        if (error) { setParseError(error); return; }
+        setParseError(null);
         setOutput(result);
       }
       setViewMode("output");
@@ -397,7 +401,14 @@ export default function BeautifyPage() {
           <div className="flex-1 min-h-0 flex flex-col">
             <div className="flex items-center justify-between px-3 py-1.5 border-b border-border bg-card shrink-0">
               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Input</span>
-              <span className="text-xs text-muted-foreground font-mono">{inputStats.lines} lines · {inputStats.chars} chars</span>
+              <div className="flex items-center gap-3">
+                {parseError && (
+                  <span className="text-xs text-red-500 dark:text-red-400 font-mono max-w-xs truncate" title={parseError}>
+                    ⚠ {parseError}
+                  </span>
+                )}
+                <span className="text-xs text-muted-foreground font-mono">{inputStats.lines} lines · {inputStats.chars} chars</span>
+              </div>
             </div>
             <textarea
               data-testid="input-code"
