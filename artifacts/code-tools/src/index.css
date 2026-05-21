@@ -5,6 +5,10 @@
 
 @custom-variant dark (&:is(.dark *));
 
+button, [role="button"] {
+  cursor: pointer;
+}
+
 @theme inline {
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
