@@ -1,5 +1,5 @@
 import * as React from "react";
-import { diffLines, diffWords } from "diff";
+import { diffTrimmedLines, diffWords } from "diff";
 import Prism from "prismjs";
 import "prismjs/components/prism-markup";
 import "prismjs/components/prism-css";
@@ -59,7 +59,7 @@ function downloadText(content: string, filename: string) {
 }
 
 function buildUnifiedDiff(original: string, modified: string): string {
-  const result = diffLines(original, modified);
+  const result = diffTrimmedLines(original, modified);
   const lines: string[] = ["--- original", "+++ modified"];
   result.forEach((part) => {
     const prefix = part.added ? "+" : part.removed ? "-" : " ";
@@ -95,7 +95,7 @@ interface TooltipState {
 }
 
 /** Pre-compute tooltips for every diff row, keyed by "partIdx-lineIdx" */
-function buildTooltipMap(diff: ReturnType<typeof diffLines>): Map<string, string> {
+function buildTooltipMap(diff: ReturnType<typeof diffTrimmedLines>): Map<string, string> {
   const map = new Map<string, string>();
   for (let i = 0; i < diff.length; i++) {
     const cur = diff[i];
@@ -128,7 +128,7 @@ export default function DiffPage() {
   const [tooltip, setTooltip] = React.useState<TooltipState | null>(null);
   const { toast } = useToast();
 
-  const diffResult = React.useMemo(() => diffLines(original, modified), [original, modified]);
+  const diffResult = React.useMemo(() => diffTrimmedLines(original, modified), [original, modified]);
   const tooltipMap = React.useMemo(() => buildTooltipMap(diffResult), [diffResult]);
 
   const stats = React.useMemo(() => {
