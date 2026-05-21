@@ -6,19 +6,27 @@ import NotFound from "@/pages/not-found";
 import { Layout } from "@/components/layout";
 import DiffPage from "@/pages/diff";
 import BeautifyPage from "@/pages/beautify";
+import LandingPage from "@/pages/landing";
 import { ThemeProvider } from "@/contexts/theme";
 
 const queryClient = new QueryClient();
 
 function Router() {
   return (
-    <Layout>
-      <Switch>
-        <Route path="/" component={DiffPage} />
-        <Route path="/beautify" component={BeautifyPage} />
-        <Route component={NotFound} />
-      </Switch>
-    </Layout>
+    <Switch>
+      {/* Landing page — no chrome */}
+      <Route path="/" component={LandingPage} />
+
+      {/* App pages — wrapped in Layout */}
+      <Route path="/diff">
+        <Layout><DiffPage /></Layout>
+      </Route>
+      <Route path="/beautify">
+        <Layout><BeautifyPage /></Layout>
+      </Route>
+
+      <Route component={NotFound} />
+    </Switch>
   );
 }
 

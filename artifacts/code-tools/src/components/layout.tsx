@@ -12,6 +12,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     <div className="min-h-[100dvh] flex flex-col bg-background text-foreground">
       <header className="border-b border-border h-14 flex items-center px-4 shrink-0 justify-between">
         <div className="flex items-center gap-6">
+          {/* Logo — links back to landing */}
           <Link href="/" className="flex items-center gap-0 select-none">
             <span
               className="font-dancing text-[1.65rem] leading-none font-bold"
@@ -28,10 +29,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
           <nav className="flex items-center gap-1">
             <Link
-              href="/"
+              href="/diff"
               className={cn(
                 "px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-2",
-                location === "/"
+                location === "/diff"
                   ? "bg-secondary text-foreground"
                   : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
               )}
