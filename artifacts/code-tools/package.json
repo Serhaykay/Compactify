@@ -78,9 +78,11 @@
     "@types/diff": "^8.0.0",
     "@types/js-beautify": "^1.14.3",
     "@types/prismjs": "^1.26.6",
+    "@types/three": "^0.184.1",
     "diff": "^9.0.0",
     "js-beautify": "^1.15.4",
     "prismjs": "^1.30.0",
-    "react-diff-viewer-continued": "^4.2.2"
+    "react-diff-viewer-continued": "^4.2.2",
+    "three": "^0.184.0"
   }
 }
