@@ -3,16 +3,18 @@
   "builds": [
     {
       "src": "artifacts/code-tools/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "artifacts/code-tools/dist/public"
-      }
+      "use": "@vercel-static-build"
     }
   ],
+  "outputDirectory": "artifacts/code-tools/dist/public",
   "routes": [
     {
       "src": "/(.*)",
       "dest": "/artifacts/code-tools/dist/public/$1"
     }
-  ]
+  ],
+  "env": {
+    "PORT": "5173",
+    "BASE_PATH": "/"
+  }
 }
