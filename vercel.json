@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "artifacts/code-tools/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "artifacts/code-tools/dist/public"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/artifacts/code-tools/dist/public/$1"
+    }
+  ]
+}
