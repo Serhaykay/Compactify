@@ -3,7 +3,10 @@
   "builds": [
     {
       "src": "artifacts/code-tools/package.json",
-      "use": "@vercel-static-build"
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "artifacts/code-tools/dist/public"
+      }
     }
   ],
   "outputDirectory": "artifacts/code-tools/dist/public",
